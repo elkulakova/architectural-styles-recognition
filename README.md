@@ -11,10 +11,10 @@
 
 3) Разработка 5 экспериментальных архитектур головы (изучить теорию по классификационным головам, порядку слоев и его влиянию на дообучение; написать 5 разных моделей головы:
 - Baseline: Linear(512>9)
-- BatchNormalization_A (после слоя активации): Linear-ReLU-BatchNormalization-Dropout-Linear  
-• GELU (замена слоя активации): Linear-GELU-BatchNormalization-Dropout-Linear
-• 2-layer (более глубокая голова): Linear-ReLU-Dropout-Linear-ReLU-Linear
-• Wide (более широкая голова): Linear(512>512)-ReLU-Dropout-Linear(512>9)) - планируемые архитектуры, в ходе работы могут быть внесены изменения;
+- BatchNormalization_A (после слоя активации): Linear-ReLU-BatchNormalization-Dropout-Linear
+- GELU (замена слоя активации): Linear-GELU-BatchNormalization-Dropout-Linear
+- 2-layer (более глубокая голова): Linear-ReLU-Dropout-Linear-ReLU-Linear
+- Wide (более широкая голова): Linear(512>512)-ReLU-Dropout-Linear(512>9)) - планируемые архитектуры, в ходе работы могут быть внесены изменения;
 
 4) Обучение экспериментов (запуск обучения моделей с сохранением логов по эпохам: значение функции потерь, значение метрик на валидационной выборке после каждой эпохи; сохранить лучшую модель для каждого случая);
 
