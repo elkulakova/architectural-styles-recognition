@@ -1,7 +1,7 @@
 # architectural-styles-recognition
 Учебно-ознакомительная практика в ИТМО. Тема "Сравнительный анализ архитектур классификационной головы при использовании предобученной ResNet-18 для классификации архитектурных стилей".
 
-Датасет для работы https://www.kaggle.com/datasets/gustavoachavez/architectural-styles-periods-dataset [https://www.kaggle.com/datasets/gustavoachavez/architectural-styles-periods-dataset], деление на 9 классов по эпохам и течениям.
+Датасет для работы [Architectural Styles Periods Dataset](https://www.kaggle.com/datasets/gustavoachavez/architectural-styles-periods-dataset), деление на 9 классов по эпохам и течениям.
 Будем сравнивать по метрикам F1-macro, weighted accuracy, top-k accuracy (в классах есть небольшой дисбаланс, эти метрики должны это учитывать).
 
 ## Задачи:
