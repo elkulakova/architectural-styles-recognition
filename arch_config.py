@@ -19,18 +19,38 @@ flat_data = '/data/arch_dataset/flat_dataset'
 
 # загрузчик данных в виде тензоров + аугментация
 def get_dataloaders():
-    chosen_transforms = {'train': transforms.Compose(
-        [transforms.RandomResizedCrop(size=256), transforms.RandomRotation(degrees=15),
-         transforms.RandomHorizontalFlip(), transforms.ToTensor(), transforms.Normalize(mean_nums, std_nums)]),
-                         'val': transforms.Compose(
-                             [transforms.Resize(256), transforms.CenterCrop(224), transforms.ToTensor(),
-                              transforms.Normalize(mean_nums, std_nums)]),
-                        'test': transforms.Compose([
-                            transforms.Resize(256),
-                            transforms.CenterCrop(224),
-                            transforms.ToTensor(),
-                            transforms.Normalize(mean_nums, std_nums)
-        ])}
+    chosen_transforms = {
+        'train': transforms.Compose([
+            # 1. КРОШКА И РОТАЦИЯ (главное для архитектуры!)
+            transforms.RandomResizedCrop(size=224, scale=(0.7, 1.0)),  # Было 256
+            transforms.RandomRotation(degrees=15),
+
+            # 2. ГЕОМЕТРИЯ
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.9, 1.1)),
+
+            # 3. ЦВЕТ (важно для фото архитектуры!)
+            transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.2, hue=0.1),
+
+            # 4. ТЕНЗОР + НОРМАЛИЗАЦИЯ
+            transforms.ToTensor(),
+            transforms.Normalize(mean_nums, std_nums)
+        ]),
+
+        'val': transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),  # Стандартизируем до 224x224
+            transforms.ToTensor(),
+            transforms.Normalize(mean_nums, std_nums)
+        ]),
+
+        'test': transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize(mean_nums, std_nums)
+        ])
+    }
 
     chosen_datasets = {x: datasets.ImageFolder(os.path.join(flat_data, x), chosen_transforms[x]) for x in
                        ['train', 'val', 'test']}
