@@ -71,6 +71,49 @@ def get_dataloaders():
 
     return dataloaders, class_names, dataset_sizes, vis_loader
 
+def get_dataloaders50():
+    chosen_transforms = {
+        'train': transforms.Compose([
+            transforms.RandomResizedCrop(size=384, scale=(0.6, 1.0)),
+            transforms.RandomHorizontalFlip(),
+            # TrivialAugmentWide сам сделает повороты и игры с цветом
+            transforms.TrivialAugmentWide(),
+            transforms.ToTensor(),
+            transforms.Normalize(mean_nums, std_nums)
+        ]),
+        'val': transforms.Compose([
+            transforms.Resize(410),
+            transforms.CenterCrop(384),
+            transforms.ToTensor(),
+            transforms.Normalize(mean_nums, std_nums)
+        ]),
+        'test': transforms.Compose([
+            transforms.Resize(410),
+            transforms.CenterCrop(384),
+            transforms.ToTensor(),
+            transforms.Normalize(mean_nums, std_nums)
+        ])
+    }
+
+    chosen_datasets = {x: datasets.ImageFolder(os.path.join(flat_data, x), chosen_transforms[x]) for x in
+                       ['train', 'val', 'test']}
+
+    dataloaders = {
+        x: torch.utils.data.DataLoader(chosen_datasets[x], batch_size=BATCH_SIZE, shuffle=(x == 'train'), num_workers=4) for x in
+        ['train', 'val', 'test']}
+
+    dataset_sizes = {x: len(chosen_datasets[x]) for x in ['train', 'val', 'test']}
+    class_names = chosen_datasets['train'].classes
+
+    vis_loader = torch.utils.data.DataLoader(
+        chosen_datasets['val'],
+        batch_size=BATCH_SIZE,
+        shuffle=True,  # только для визуализации
+        num_workers=4
+    )
+
+    return dataloaders, class_names, dataset_sizes, vis_loader
+
 # Visualize some images
 def imshow(inp, title=None):
     inp = inp.numpy().transpose((1, 2, 0))
