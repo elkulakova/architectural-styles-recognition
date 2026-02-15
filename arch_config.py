@@ -12,7 +12,7 @@ import seaborn as sns
 
 mean_nums = [0.485, 0.456, 0.406]
 std_nums = [0.229, 0.224, 0.225]
-BATCH_SIZE = 4
+BATCH_SIZE = 32
 NUM_WORKERS = 4
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 flat_data = '/data/arch_dataset/flat_dataset'
@@ -56,7 +56,7 @@ def get_dataloaders():
                        ['train', 'val', 'test']}
 
     dataloaders = {
-        x: torch.utils.data.DataLoader(chosen_datasets[x], batch_size=4, shuffle=(x == 'train'), num_workers=4) for x in
+        x: torch.utils.data.DataLoader(chosen_datasets[x], batch_size=BATCH_SIZE, shuffle=(x == 'train'), num_workers=4) for x in
         ['train', 'val', 'test']}
 
     dataset_sizes = {x: len(chosen_datasets[x]) for x in ['train', 'val', 'test']}
@@ -64,7 +64,7 @@ def get_dataloaders():
 
     vis_loader = torch.utils.data.DataLoader(
         chosen_datasets['val'],
-        batch_size=4,
+        batch_size=BATCH_SIZE,
         shuffle=True,  # только для визуализации
         num_workers=4
     )
