@@ -17,6 +17,24 @@ NUM_WORKERS = 4
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 flat_data = '/data/arch_dataset/flat_dataset'
 
+class EarlyStopping:
+    def __init__(self, patience=7, min_delta=0.001):
+        self.patience = patience
+        self.min_delta = min_delta
+        self.counter = 0
+        self.best_f1 = float('-inf')
+        self.early_stop = False
+
+    def __call__(self, val_f1):
+        if val_f1 > self.best_f1 + self.min_delta:
+            self.best_f1 = val_f1
+            self.counter = 0
+        else:
+            self.counter += 1
+            if self.counter >= self.patience:
+                self.early_stop = True
+        return self.early_stop
+
 # загрузчик данных в виде тензоров + аугментация
 def get_dataloaders():
     chosen_transforms = {
@@ -150,6 +168,8 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
     loss_train = []
     loss_val = []
 
+    early_stopper = EarlyStopping()
+
     for epoch in range(num_epochs):
         epoch_time = time.time()
         print('Epoch {}/{}'.format(epoch + 1, num_epochs))
@@ -217,19 +237,23 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
                 f1_val.append(epoch_f1)
                 top3_val.append(epoch_top3)
                 top1_val.append(epoch_top1)
-                loss_val.append(epoch_loss) ## ???
+                loss_val.append(epoch_loss)
+                early_stopper(epoch_f1)
 
-
-            if phase == 'val' and (epoch_f1 > best_f1 or (epoch_top1 > best_top1 and epoch_f1 >= best_f1)):
-                best_f1 = epoch_f1
-                best_top1 = epoch_top1 if epoch_top1 > best_top1 else best_top1
-                best_top3 = epoch_top3 if epoch_top3 > best_top3 else best_top3
-                best_wacc = epoch_wacc if epoch_wacc > best_wacc else best_wacc
-                best_model_wts = copy.deepcopy(model.state_dict())
+                if epoch_f1 > best_f1 or (epoch_top1 > best_top1 and epoch_f1 >= best_f1):
+                    best_f1 = epoch_f1
+                    best_top1 = epoch_top1 if epoch_top1 > best_top1 else best_top1
+                    best_top3 = epoch_top3 if epoch_top3 > best_top3 else best_top3
+                    best_wacc = epoch_wacc if epoch_wacc > best_wacc else best_wacc
+                    best_model_wts = copy.deepcopy(model.state_dict())
 
             del all_preds, all_labels, all_probs
         print('Epoch Time: {:.4f}s'.format(time.time() - epoch_time))
         print()
+
+        if early_stopper.early_stop:
+            print(f"✅ Early stopping на epoch {epoch + 1}")
+            break
 
     time_since = time.time() - since
     print('Training complete in {:.0f}m {:.0f}s'.format( time_since // 60, time_since % 60))
