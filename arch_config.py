@@ -252,9 +252,9 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
         print('Epoch Time: {:.4f}s'.format(time.time() - epoch_time))
         print()
 
-        #if early_stopper.early_stop:
-            #print(f"✅ Early stopping на epoch {epoch + 1}")
-            #break
+        if early_stopper.early_stop and epoch + 1 != num_epochs:
+            print(f"✅ Early stopping на epoch {epoch + 1}")
+            break
 
     time_since = time.time() - since
     print('Training complete in {:.0f}m {:.0f}s'.format( time_since // 60, time_since % 60))
