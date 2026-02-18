@@ -29,18 +29,24 @@ class EarlyStopping:
         if val_f1 > self.best_f1 + self.min_delta:
             self.best_f1 = val_f1
             self.counter = 0
+            print(f"🌟 New best F1_macro: {val_f1:.4f}")
         else:
             self.counter += 1
+            print(f"⏳️ No improvements: {self.counter}/{self.patience}")
             if self.counter >= self.patience:
                 self.early_stop = True
+                print(f"🛑 Early stop! patience={self.patience}")
         return self.early_stop
+
+RESIZE_SIZE = 384  # rn18: 256, enb4: 384
+IMG_SIZE = 380     # rn18: 224, enb4: 380
 
 # загрузчик данных в виде тензоров + аугментация
 def get_dataloaders():
     chosen_transforms = {
         'train': transforms.Compose([
             # 1. КРОШКА И РОТАЦИЯ (главное для архитектуры!)
-            transforms.RandomResizedCrop(size=224, scale=(0.7, 1.0)),  # Было 256
+            transforms.RandomResizedCrop(size=IMG_SIZE, scale=(0.7, 1.0)),
             transforms.RandomRotation(degrees=15),
             transforms.TrivialAugmentWide(),
 
@@ -57,15 +63,15 @@ def get_dataloaders():
         ]),
 
         'val': transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(224),  # Стандартизируем до 224x224
+            transforms.Resize(RESIZE_SIZE, interpolation=transforms.InterpolationMode.BICUBIC), # 256 rn18
+            transforms.CenterCrop(IMG_SIZE),  # 224x224 rn18, 380 enb4
             transforms.ToTensor(),
             transforms.Normalize(mean_nums, std_nums)
         ]),
 
         'test': transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
+            transforms.Resize(RESIZE_SIZE, interpolation=transforms.InterpolationMode.BICUBIC),
+            transforms.CenterCrop(IMG_SIZE),
             transforms.ToTensor(),
             transforms.Normalize(mean_nums, std_nums)
         ])
@@ -169,7 +175,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
     loss_train = []
     loss_val = []
 
-    early_stopper = EarlyStopping()
+    early_stopper = EarlyStopping(patience=10, min_delta=0.0005)
 
     for epoch in range(num_epochs):
         epoch_time = time.time()
@@ -253,7 +259,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
         print()
 
         if early_stopper.early_stop and epoch + 1 != num_epochs:
-            print(f"✅ Early stopping на epoch {epoch + 1}")
+            print(f"✅ Early stopping on epoch {epoch + 1}")
             break
 
     time_since = time.time() - since
