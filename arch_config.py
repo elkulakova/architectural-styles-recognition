@@ -1,6 +1,7 @@
 import pandas as pd
 import torch
 from torchvision import datasets, transforms
+from torch.utils.data import ConcatDataset
 import matplotlib.pyplot as plt
 import numpy as np
 import time
@@ -40,6 +41,57 @@ class EarlyStopping:
 
 RESIZE_SIZE = 384  # rn18: 256, enb4: 384
 IMG_SIZE = 380     # rn18: 224, enb4: 380
+
+def get_dataloaders_final():
+    chosen_transforms = {
+        'train': transforms.Compose([
+            # 1. КРОШКА И РОТАЦИЯ (главное для архитектуры!)
+            transforms.RandomResizedCrop(size=IMG_SIZE, scale=(0.7, 1.0)),
+            transforms.RandomRotation(degrees=15),
+            transforms.TrivialAugmentWide(),
+
+            # 2. ГЕОМЕТРИЯ
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.9, 1.1)),
+
+            # 3. ЦВЕТ (важно для фото архитектуры!)
+            transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.2, hue=0.1),
+
+            # 4. ТЕНЗОР + НОРМАЛИЗАЦИЯ
+            transforms.ToTensor(),
+            transforms.Normalize(mean_nums, std_nums)
+        ]),
+
+        'val': transforms.Compose([
+            transforms.Resize(RESIZE_SIZE, interpolation=transforms.InterpolationMode.BICUBIC),
+            transforms.CenterCrop(IMG_SIZE),
+            transforms.ToTensor(),
+            transforms.Normalize(mean_nums, std_nums)
+        ])
+    }
+
+    train_dataset = datasets.ImageFolder(os.path.join(flat_data, 'train'), chosen_transforms['train'])
+    val_dataset = datasets.ImageFolder(os.path.join(flat_data, 'val'), chosen_transforms['train'])
+
+    chosen_datasets = {'train': ConcatDataset([train_dataset, val_dataset]),
+                       'val': datasets.ImageFolder(os.path.join(flat_data, 'test'), chosen_transforms['val'])}
+
+    dataloaders = {
+        x: torch.utils.data.DataLoader(chosen_datasets[x], batch_size=BATCH_SIZE, shuffle=(x == 'train'), num_workers=NUM_WORKERS)
+        for x in
+        ['train', 'val']}
+
+    dataset_sizes = {x: len(chosen_datasets[x]) for x in ['train', 'val']}
+    class_names = train_dataset.classes
+
+    vis_loader = torch.utils.data.DataLoader(
+        chosen_datasets['val'],
+        batch_size=BATCH_SIZE,
+        shuffle=True,  # только для визуализации
+        num_workers=NUM_WORKERS
+    )
+
+    return dataloaders, class_names, dataset_sizes, vis_loader
 
 # загрузчик данных в виде тензоров + аугментация
 def get_dataloaders():
